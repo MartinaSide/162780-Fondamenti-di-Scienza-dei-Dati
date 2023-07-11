@@ -1,0 +1,524 @@
+---
+title: "CHI HA COPIATO DI PIÙ?"
+subtitle: "Un confronto tra opere e autori greci"
+author: "Martina Siderini"
+date: "`r Sys.Date()`"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+library(plotly)
+library(ggplot2)
+library(shiny)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{css, echo=FALSE}
+h1{
+color: #FF6600;
+font-size: 28px;
+text-align: right;
+}
+
+h2 {
+color: #779AAB;
+font-size: 24px;
+text-align: left;
+}
+
+hr{
+width: 100%
+color: #5c403c;
+margin-top: 50px;
+border: none;
+height: 12px;
+}
+
+p {
+font-size: 20px;
+}
+
+```
+<hr>
+
+# Motivazioni e obiettivi
+<hr>
+
+## Perché questo progetto
+
+-   Passione per la letteratura: La mia passione per la letteratura ha ispirato la realizzazione di questo progetto.
+
+-   Aiuto agli studenti delle lingue classiche: Il progetto fornisce agli studenti delle lingue classiche uno strumento utile per arricchire la comprensione delle opere letterarie greche.
+
+-   Sfida intellettuale: Realizzare questo progetto è stata una sfida intellettuale affascinante che ha richiesto analisi approfondite e competenze tecniche per ottenere risultati significativi.
+
+---
+
+## Obiettivi
+
+-   Analizzare la frequenza delle parole nella letteratura greca;
+
+-   Individuare opere e autori simili;
+
+-   Fornire spunti per l'interpretazione e lo studio comparativo.
+
+---
+
+# Dataset
+<hr>
+
+## FONTI, STRUMENTI E RICERCA DEI DATI
+
+- Ho creato i database poiché non sono disponibili online né database né dataset già pronti per il mio progetto.
+- Ho ottenuto i dati grezzi (.xml) dal sito [Perseus](http://www.perseus.tufts.edu/hopper/).
+- Per riprodurre i risultati, basta eseguire il codice Python disponibile su [GitHub](https://github.com/MartinaSide/PerseusFrequencyScrapper).
+
+---
+
+## Perseus Digital Library Project
+
+Perseus è un progetto open-source ideato nel 1985 che si pone l'obiettivo di digitalizzare e mettere a disposizione dell'utenza un'enorme collezione di dati organizzati in maniera da soddisfare le esigenze di quanti più utenti possibili. 
+
+I servizi che offre possono essere raggruppati in tre categorie:
+
+- <b>Supporto linguistico</b>, lemmatizzazione automatica e analisi morfologica, usato per questo progetto;
+
+- <b>Lettura contestualizzata</b>, interazione con più testi allo stesso tempo per ottenere una visione più completa;
+
+- <b>Ricerca</b>, ricerca di un lemma in tutte le opere con i risultati che lo contengono anche in forma flessa.
+---
+
+## IL DATABASE
+
+Il database contiene la frequenza di tutte parole contenute nelle opere greche e latine che ci sono giunte e queste vengono salvate in tre tipi di dataset fondamentali:
+
+- "- all perc.csv"
+
+- "- similarity matrix.csv"
+
+- "- all keys.csv"
+
+Il resto del database è formato dai dati utilizzati per ottenere questi dataset e nel codice Python è presente un metodo per eliminarlo, una volta ottenuti i risultati desiderati.
+
+I dati sulle opere latine non vengono utilizzati da questo progetto, ma sono comunque presenti nel database e i dataset sono costruiti in maniera identica a quelli per il greco.
+
+---
+
+# L'ANALISI
+
+---
+
+## QUALI SONO LE PAROLE PIÙ COMUNI IN GRECO?
+
+Una delle difficoltà maggiori nello studio di una lingua è la scelta del lessico fondamentale da imparare. 
+
+```{r, echo=FALSE}
+library(shiny)
+library(ggplot2)
+
+# Read the data from the CSV file
+data <- read.csv("E:/classicalTextFrequencies/greek output/All Works - pure/- all freq.csv", header = TRUE)
+
+# Extract labels from the first column
+labels <- data$headword
+
+# Sum the data columns
+data_sum <- rowSums(data[, 3:ncol(data)])
+
+# Make the values smaller so that they can be seen better in the graph
+scaled_data_sum <- log10(data_sum)
+
+# Define the UI
+ui <- fluidPage(
+  titlePanel("I lemmi più frequenti del greco"),
+  sidebarLayout(
+    sidebarPanel(
+      radioButtons("graph_type", "Seleziona il tipo di grafico:",
+                   choices = c("Grafico a Barre", "Grafico a Linee")),
+      conditionalPanel(
+        condition = "input.graph_type == 'Grafico a Barre'",
+        sliderInput("num_values", "Numero di valori da visualizzare:",
+                    min = 3, max = 50, value = 10)
+      ),
+      conditionalPanel(
+        condition = "input.graph_type == 'Grafico a Linee'",
+        radioButtons("value_type", "Seleziona la scala dei valori:",
+                     choices = c("Frequenza", "log10(Frequenza)"), selected = "Frequenza"),
+      ),
+      checkboxInput("fit_curve", "Aggiungi una linea di tendenza logaritmica", value = FALSE)
+    ),
+    mainPanel(
+      plotOutput("plot")
+    )
+  )
+)
+
+# Define the server
+server <- function(input, output) {
+  # Generate the selected plot
+  output$plot <- renderPlot({
+    if (input$graph_type == "Grafico a Barre") {
+      # Create a data frame with labels and values
+      df <- data.frame(Label = labels, Value = data_sum, stringsAsFactors = FALSE)
+      
+      # Sort the data frame by descending values
+      df <- df[order(-df$Value), ]
+      
+      # Get the top n values
+      top_values <- head(df$Value, input$num_values)
+      top_labels <- df$Label[order(-df$Value)][1:input$num_values]
+      
+      # Create a data frame for the bar graph
+      df <- data.frame(Value = top_values, Label = top_labels, stringsAsFactors = FALSE)
+      
+      # Plot the bar graph
+      ggplot(df, aes(x = reorder(Label, -Value), y = Value)) +
+        geom_bar(stat = "identity", fill = "#779AAB") +
+        labs(title = "Grafico a barre dei lemmi più comuni in greco antico", x = "Lemmi", y = "Frequenza") +
+        scale_x_discrete(labels = df$Label)
+    } else if (input$graph_type == "Grafico a Linee") {
+      values <- switch(input$value_type,
+                       "Frequenza" = data_sum,
+                       "log10(Frequenza)" = scaled_data_sum)
+      
+      sorted_values <- sort(values, decreasing = TRUE)
+      
+      # Create a data frame for the line graph
+      df <- data.frame(Value = sorted_values)
+      
+      # Plot the line graph
+      p <- ggplot(df, aes(x = 1:length(Value), y = Value)) +
+        geom_line() +
+        labs(title = "Grafico a Linee",
+             x = "Index", y = input$value_type)
+      
+      # Fit a logarithmic curve if selected
+      if (input$fit_curve) {
+        p <- p + stat_smooth(method = "nls", formula = "y ~ a + b * log(x)",
+                             se = FALSE, method.args = list(start = list(a = 1, b = 1)))
+      }
+      
+      p
+    }
+  })
+}
+
+# Run the Shiny app
+shinyApp(ui = ui, server = server)
+```
+
+Il lemma più frequente nel greco antico è ὁ, l'articolo determinativo, seguito da verbi di essere, preposizioni, congiunzioni e parole indeclinabili. Sebbene siano fondamentali nello studio della lingua, questi lemmi non esprimono concetti specifici ed è molto probabile che siano comunque i primi che vengono studiati in ogni caso e quindi sono stati tutti eliminati dalle analisi che seguiranno.
+
+```{r, echo=FALSE}
+library(shiny)
+library(ggplot2)
+
+# Read the data from the CSV file
+data <- read.csv("E:/classicalTextFrequencies/greek output/All Works - Filtered.csv", header = TRUE)
+
+# Extract labels from the first column
+labels <- data$headword
+
+# Sum the data columns
+data_sum <- rowSums(data[, 3:ncol(data)])
+
+# Make the values smaller so that they can be seen better in the graph
+scaled_data_sum <- log10(data_sum)
+
+# Define the UI
+ui <- fluidPage(
+  titlePanel("Le parole più frequenti del greco"),
+  sidebarLayout(
+    sidebarPanel(
+      radioButtons("graph_type", "Seleziona il tipo di grafico:",
+                   choices = c("Grafico a Barre", "Grafico a Linee")),
+      conditionalPanel(
+        condition = "input.graph_type == 'Grafico a Barre'",
+        sliderInput("num_values", "Numero di valori da visualizzare:",
+                    min = 3, max = 50, value = 10)
+      ),
+      conditionalPanel(
+        condition = "input.graph_type == 'Grafico a Linee'",
+        radioButtons("value_type", "Seleziona la scala dei valori:",
+                     choices = c("Frequenza", "log10(Frequenza)"), selected = "Frequenza"),
+      ),
+      checkboxInput("fit_curve", "Aggiungi una linea di tendenza logaritmica", value = FALSE)
+    ),
+    mainPanel(
+      plotOutput("plot")
+    )
+  )
+)
+
+# Define the server
+server <- function(input, output) {
+  # Generate the selected plot
+  output$plot <- renderPlot({
+    if (input$graph_type == "Grafico a Barre") {
+      # Create a data frame with labels and values
+      df <- data.frame(Label = labels, Value = data_sum, stringsAsFactors = FALSE)
+      
+      # Sort the data frame by descending values
+      df <- df[order(-df$Value), ]
+      
+      # Get the top n values
+      top_values <- head(df$Value, input$num_values)
+      top_labels <- df$Label[order(-df$Value)][1:input$num_values]
+      
+      # Create a data frame for the bar graph
+      df <- data.frame(Value = top_values, Label = top_labels, stringsAsFactors = FALSE)
+      
+      # Plot the bar graph
+      ggplot(df, aes(x = reorder(Label, -Value), y = Value)) +
+        geom_bar(stat = "identity", fill = "#779AAB") +
+        labs(title = "Grafico a barre dei lemmi più comuni in greco antico", x = "Lemmi", y = "Frequenza") +
+        scale_x_discrete(labels = df$Label)
+    } else if (input$graph_type == "Grafico a Linee") {
+      values <- switch(input$value_type,
+                       "Frequenza" = data_sum,
+                       "log10(Frequenza)" = scaled_data_sum)
+      
+      sorted_values <- sort(values, decreasing = TRUE)
+      
+      # Create a data frame for the line graph
+      df <- data.frame(Value = sorted_values)
+      
+      # Plot the line graph
+      p <- ggplot(df, aes(x = 1:length(Value), y = Value)) +
+        geom_line() +
+        labs(title = "Grafico a Linee",
+             x = "Index", y = input$value_type)
+      
+      # Fit a logarithmic curve if selected
+      if (input$fit_curve) {
+        p <- p + stat_smooth(method = "nls", formula = "y ~ a + b * log(x)",
+                             se = FALSE, method.args = list(start = list(a = 1, b = 1)))
+      }
+      
+      p
+    }
+  })
+}
+
+# Run the Shiny app
+shinyApp(ui = ui, server = server)
+```
+
+---
+
+## QUANTO SONO SIMILI GLI ARGOMENTI TRATTATI DAGLI AUTORI GRECI?
+
+Analizzando la frequenza dei lemmi che esprimono concetti specifici, è possibile rappresentare quali autori trattano argomenti simili.
+
+```{r, echo=FALSE}
+library(shiny)
+library(ggplot2)
+
+# Read the similarity matrix from the CSV file
+data_authors <- as.matrix(read.csv("E:/classicalTextFrequencies/DONT TOUCH IT/gr - similarity matrix.csv", dec = "."))
+rownames(data_authors) <- colnames(data_authors)
+
+# Define the UI
+ui <- fluidPage(
+  titlePanel("Similarity Matrix Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("plot_type", "Select Plot Type:",
+                  choices = c("Heatmap", "Grafico a Barre"), selected = "Heatmap"),
+      conditionalPanel(
+        condition = "input.plot_type == 'Grafico a Barre'",
+        selectInput("row_select", "Select a Row:",
+                    choices = row.names(data_authors)[-1]),
+        sliderInput("topn_slider", "Number of Top Values to Show:",
+                    min = 3, max = length(colnames(data_authors)) - 1, value = 10)
+      )
+    ),
+    mainPanel(
+      plotOutput("plot", height = "500px")  # Set a fixed height for the plot
+    )
+  ),
+  width = "800px",  # Set the width of the UI
+  height = "800px"  # Set the height of the UI
+)
+
+# Define the server
+server <- function(input, output) {
+  
+  # Generate the selected plot
+  output$plot <- renderPlot({
+    if (input$plot_type == "Heatmap") {
+      heatmap(data_authors, Rowv = NA, Colv = NA, symm = TRUE)
+    } else if (input$plot_type == "Grafico a Barre") {
+      row <- input$row_select
+      topn <- input$topn_slider
+      sorted_values <- sort(data_authors[row, ], decreasing = TRUE)
+      topn_values <- sorted_values[2:(topn+1)]  # Exclude the biggest value
+      sorted_columns <- names(topn_values)[order(topn_values, decreasing = TRUE)]
+      filtered_matrix <- data_authors[, c(row, sorted_columns)]
+      data <- data.frame(Works = colnames(filtered_matrix)[-1], Similarity = filtered_matrix[row, -1])
+      data$TopThree <- ifelse(data$Works %in% data$Works[1:3], TRUE, FALSE)  # Highlight top three works
+      ggplot(data, aes(x = Works, y = Similarity)) +
+        geom_bar(stat = "identity", fill = ifelse(data$TopThree, "#FF6600", "#779AAB")) +
+        labs(title = paste("Similarity to", input$row_select),
+             x = "Works", y = "Similarity") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+        geom_text(aes(label = round(Similarity, 2)), vjust = -0.5, size = 3)
+    }
+  })
+}
+
+# Run the Shiny app
+shinyApp(ui = ui, server = server)
+```
+
+Da questi dati si notano vari risultati interessanti, ad esempio:
+
+-   <b>Euclide</b>, che compone principalmente opere matematiche è molto dissimile dagli altri autori che ci sono giunti
+
+-   L'<b>alessandrinismo</b>, un movimento letterario del IV secolo a.C. è talmente d'ampio respiro che gli autori che vi appartengono non si assomigliano molto per tematiche (ad esempio Callimaco ed Apollonio Rodio, i due capiscuola)
+
+-   La <b>tragedia</b> e la <b>commedia</b> di età classica affrontano gli stessi argomenti e questo viene evidenziato da quanto risultano simili tra loro Eschilo, Sofocle, Euripide ed Aristofane
+
+Questa analisi NON è in grado di riconoscere lo stile di un autore!
+
+<!--
+Questo grafico può risultare come un semplice quadretto di colorato, ma in realtà rivela molto di più, tra cui il fatto che non ci si può fidare ciecamente di quest'analisi. Quindi vorrei mostrare tre comportamenti che da un lato ne evidenziano la validità ma ne mostrano anche i limiti.
+Il primo caso è quello di Euclide, un matematico vissuto tra il quarto ed il terzo secolo avanti Cristo, considerato il padre della geometria. Sfortunatamente, nonostante i numerosi trattati matematici scritti nell'antichità, i suoi Στοιχεῖα, Stoichêia, o Elementi sono tra le poche opere ad esserci giunte e questo è ben chiaro vedendo come è l'autore più dissimile tra tutti gli altri.
+Il secondo caso è quello dell'alessandrinismo, un movimento letterario molto particolare del IV secolo a.C. difficile da definire, ma che mette al centro dell'attenzione la cura formale e la raffinatezza dei metodi espressivi e stilistici. Dunque, non segue dei temi precisi (anzi, gli autori alessandrini spesso ricercavano attivamente gli argomenti più oscuri) e questo è anche ben visibile dal grafico perché gli autori che vi apparengono, come Callimaco e Apollonio Rodio, si assomigliano molto meno di quanto si assomigliano gli autori del terzo caso.
+La commedia e la tragedia di età classica sono entrambe caratterizzate dall'affrontare tematiche politiche utilizzando la copertura del mito per mettere in scena episodi della politica quotidiana. Specialmente la commedia aveva un ruolo di satira e metteva in scena gli stessi argomenti della tragedia. Questo è evidente notando quanto Eschilo, Sofocle, Euripide ed Aristofane si assomigliano. Leggendo le opere però è evidente come siano quattro autori profondamente diversi.
+Questa analisi data dalla frequenza delle parole non è quindi qualcosa che permette di identificare lo stile dell'autore, ma permette di mettere a confronto le tematiche trattate. 
+--->
+
+---
+
+## QUANTO SIMILI SONO LE OPERE
+
+In maniera simile a quanto visto con gli autori, è possibile confrontare le opere letterarie per andare a scoprire quali hanno gli argomenti più simili.
+
+```{r, echo=FALSE}
+library(shiny)
+library(ggplot2)
+
+# Read the similarity matrix from the CSV file
+similarity_matrix <- as.matrix(read.csv("E:/classicalTextFrequencies/000/gr - similarity matrix.csv", header = TRUE, row.names = 1))
+rownames(similarity_matrix) <- c(c(0), colnames(similarity_matrix))
+
+# Define the UI
+ui <- fluidPage(
+  titlePanel("Similarity Matrix Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("row_select", "Select a Row:", choices = row.names(similarity_matrix)[-1]),
+      sliderInput("topn_slider", "Number of Top Values to Show:",
+                  min = 3, max = length(colnames(similarity_matrix)) - 1, value = 10)
+    ),
+    mainPanel(
+      plotOutput("bar_plot", height = "500px")  # Set a fixed height for the plot
+    )
+  )
+)
+
+# Define the server
+server <- function(input, output) {
+
+  # Create a reactive expression to filter the top N values and order the columns
+  filtered_data <- reactive({
+    row <- input$row_select
+    topn <- input$topn_slider
+    sorted_values <- sort(similarity_matrix[row, ], decreasing = TRUE)
+    topn_values <- sorted_values[2:(topn+1)]  # Exclude the biggest value
+    sorted_columns <- names(topn_values)[order(topn_values, decreasing = TRUE)]
+    filtered_matrix <- similarity_matrix[, c(row, sorted_columns)]
+    data <- data.frame(Works = colnames(filtered_matrix)[-1], Similarity = filtered_matrix[row, -1])
+    data$TopThree <- ifelse(data$Works %in% data$Works[1:3], TRUE, FALSE)  # Highlight top three works
+    data
+  })
+
+  # Generate the bar plot
+  output$bar_plot <- renderPlot({
+    data <- filtered_data()
+    ggplot(data, aes(x = Works, y = Similarity)) +
+      geom_bar(stat = "identity", fill = ifelse(data$TopThree, "#FF6600", "#779AAB")) +  # Set color to RED for top three, and ORANGE for others
+      labs(title = paste("Similarity to", input$row_select),
+           x = "Works", y = "Similarity") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotate x-axis labels
+      geom_text(aes(label = round(Similarity, 2)), vjust = -0.5, size = 3)  # Show y-axis values on each bar
+  })
+}
+
+# Run the Shiny app
+shinyApp(ui = ui, server = server)
+```
+
+<!--
+Scegliendo sempre
+-->
+
+<hr>
+```{r, echo=FALSE}
+library(shiny)
+library(plotly)
+
+# Read the data from the CSV file
+data <- read.csv("E:/classicalTextFrequencies/000/gr - all perc.csv", header = TRUE)
+
+# Define the UI
+ui <- fluidPage(
+  titlePanel("Scatter Graph Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("column1_select", "Select Column 1:", choices = colnames(data)),
+      selectInput("column2_select", "Select Column 2:", choices = colnames(data)),
+      selectInput("column3_select", "Select Column 3:", choices = colnames(data), selected = NULL),
+      actionButton("plot_button", "Plot")
+    ),
+    mainPanel(
+      plotlyOutput("scatter_plot")
+    )
+  )
+)
+
+# Define the server
+server <- function(input, output) {
+  
+  # Generate the scatter graph with lines and no markers
+  output$scatter_plot <- renderPlotly({
+    columns <- c(input$column1_select, input$column2_select, input$column3_select)
+    selected_data <- data[, columns, drop = FALSE]
+    
+    if (sum(!is.na(selected_data)) > 0) {
+      plot_ly(selected_data, x = 1:nrow(selected_data)) %>%
+        add_trace(y = ~selected_data[, 1], type = "scatter", mode = "lines", line = list(color = ~names(selected_data)[1])) %>%
+        add_trace(y = ~selected_data[, 2], type = "scatter", mode = "lines", line = list(color = ~names(selected_data)[2])) %>%
+        add_trace(y = ~selected_data[, 3], type = "scatter", mode = "lines", line = list(color = ~names(selected_data)[3])) %>%
+        layout(title = "Scatter Graph with Lines",
+               xaxis = list(title = "Index"),
+               yaxis = list(title = "Value"),
+               hovermode = "closest") %>%
+        config(displayModeBar = TRUE)  # Show the zoom and pan buttons
+    } else {
+      plot_ly() %>%
+        layout(title = "Scatter Graph with Lines",
+               xaxis = list(title = "Index"),
+               yaxis = list(title = "Value"),
+               hovermode = "closest") %>%
+        config(displayModeBar = TRUE)  # Show the zoom and pan buttons
+    }
+  })
+}
+
+# Run the Shiny app
+shinyApp(ui = ui, server = server)
+```
+# Conclusioni
+
+L'analisi delle frequenze dei lemmi nelle opere letterarie offre preziose informazioni, ma dobbiamo essere consapevoli dei suoi limiti quando si tratta di categorizzare gli autori all'interno di movimenti letterari più ampi. La complessità e la ricchezza dell'arte letteraria vanno oltre le semplici frequenze di parole, e la bellezza della lettura risiede anche nella sua capacità di sorprenderci e ispirarci in modi imprevedibili.
+
+<hr>
+In memoria della professoressa Marina Sergi Franzutti, una cara amica che ha lasciato un'impronta indelebile nel mio cuore, guidandomi alla scoperta di questo campo.
+<hr>

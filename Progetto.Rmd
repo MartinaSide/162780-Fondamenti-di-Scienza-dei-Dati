@@ -49,11 +49,11 @@ font-size: 20px;
 
 ## Perché questo progetto
 
--   Passione per la letteratura: La mia passione per la letteratura ha ispirato la realizzazione di questo progetto.
+-   La mia passione per la letteratura e il mio desiderio di provare ad avvicinare le discipline umanistiche a quelle scientifiche hanno ispirato la realizzazione di questo progetto;
 
--   Aiuto agli studenti delle lingue classiche: Il progetto fornisce agli studenti delle lingue classiche uno strumento utile per arricchire la comprensione delle opere letterarie greche.
+-   Il progetto potrebbe fornire agli studenti delle lingue classiche uno strumento utile per arricchire la comprensione delle opere letterarie greche;
 
--   Sfida intellettuale: Realizzare questo progetto è stata una sfida intellettuale affascinante che ha richiesto analisi approfondite e competenze tecniche per ottenere risultati significativi.
+-   Realizzare questo progetto è stata una sfida intellettuale che mi ha messo a dura prova su più fronti e mi ha fatto sviluppare nuove competenze.
 
 ---
 
@@ -73,7 +73,9 @@ font-size: 20px;
 ## FONTI, STRUMENTI E RICERCA DEI DATI
 
 - Ho creato i database poiché non sono disponibili online né database né dataset già pronti per il mio progetto.
+
 - Ho ottenuto i dati grezzi (.xml) dal sito [Perseus](http://www.perseus.tufts.edu/hopper/).
+
 - Per riprodurre i risultati, basta eseguire il codice Python disponibile su [GitHub](https://github.com/MartinaSide/PerseusFrequencyScrapper).
 
 ---
@@ -89,6 +91,7 @@ I servizi che offre possono essere raggruppati in tre categorie:
 - <b>Lettura contestualizzata</b>, interazione con più testi allo stesso tempo per ottenere una visione più completa;
 
 - <b>Ricerca</b>, ricerca di un lemma in tutte le opere con i risultati che lo contengono anche in forma flessa.
+
 ---
 
 ## IL DATABASE
@@ -107,7 +110,7 @@ I dati sulle opere latine non vengono utilizzati da questo progetto, ma sono com
 
 ---
 
-# L'ANALISI
+# Analisi
 
 ---
 
@@ -323,7 +326,7 @@ rownames(data_authors) <- colnames(data_authors)
 
 # Define the UI
 ui <- fluidPage(
-  titlePanel("Similarity Matrix Explorer"),
+  titlePanel("Similitudine tra gli autori"),
   sidebarLayout(
     sidebarPanel(
       selectInput("plot_type", "Select Plot Type:",
@@ -409,11 +412,11 @@ rownames(similarity_matrix) <- c(c(0), colnames(similarity_matrix))
 
 # Define the UI
 ui <- fluidPage(
-  titlePanel("Similarity Matrix Explorer"),
+  titlePanel("Similitudine tra le opere"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("row_select", "Select a Row:", choices = row.names(similarity_matrix)[-1]),
-      sliderInput("topn_slider", "Number of Top Values to Show:",
+      selectInput("row_select", "Seleziona un'opera:", choices = row.names(similarity_matrix)[-1]),
+      sliderInput("topn_slider", "Numero di opere più simili da visualizzare:",
                   min = 3, max = length(colnames(similarity_matrix)) - 1, value = 10)
     ),
     mainPanel(
@@ -444,7 +447,7 @@ server <- function(input, output) {
     ggplot(data, aes(x = Works, y = Similarity)) +
       geom_bar(stat = "identity", fill = ifelse(data$TopThree, "#FF6600", "#779AAB")) +  # Set color to RED for top three, and ORANGE for others
       labs(title = paste("Similarity to", input$row_select),
-           x = "Works", y = "Similarity") +
+           x = "Opere", y = "Similitudine [0,1]") +
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotate x-axis labels
       geom_text(aes(label = round(Similarity, 2)), vjust = -0.5, size = 3)  # Show y-axis values on each bar
@@ -455,8 +458,32 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 ```
 
+<b>Euclide</b>:
+
+- Similitudine lontana con i trattati filosofici di Plutarco e il trattato di Astronomia di Claudio Tolomeo.
+
+<b>Callimaco</b>:
+
+- Notevoli somiglianze con delle collezioni di opere spurie
+
+<b>Apollonio Rodio</b>:
+
+- Notevoli somiglianze con l'Iliade e l'Odissea (circa 80% di similitudine).
+
+<b>Le Rane di Aristofane</b>:
+
+- Molto simile ad altre opere di Aristofane;
+
+- Soprendente similitudine con il ciclo di tragedie sofoclee su Edipo.
+
 <!--
-Scegliendo sempre
+Scegliendo sempre gli autori di prima, è possibile affinare alcune considerazioni: Euclide mostra una somiglianza molto lontana con i trattati filosofici di Plutarco e il trattato di Astronomia di Claudio Tolomeo, probabilmente il confronto con Plutarco è dovuto ai (pochi) elementi di filosofia presenti negli Elementi, mentre Claudio Tolomeo offre un trattato assiomatico dell'astronomia, in modo simile a quello che Euclide presenta per la geometria.
+
+Callimaco presenta notevoli somiglianze con delle collezioni di opere spurie, che potrebbero effettivamente contenere sia suoi componimenti che lavori di autori minori che imitavano il suo stile, evidenziando l'influenza di Callimaco come figura centrale nell'alessandrinismo letterario.
+
+Apollonio Rodio presenta notevoli somiglianze con l'Iliade e l'Odissea, (sono simili quasi per l'80% secondo il criterio usato), ma questo è giustificabile perché le Argonautiche di Apollonio Rodio contengono alcuni dei medesimi protagonisti e spesso imitano l'Iliade e l'Odissea. La differenza profonda rimane nel fatto che Apollonio Rodio è un Alessandrino, cioè molto attento allo stile, mentre l'Iliade e l'Odissea sono frutto di una tradizione orale-aurale.
+
+Le rane di Aristofane invece presentano una soprendente similitudine con il ciclo di tragedie sofoclee su Edipo. La trama di queste opere potrebbe essere difficilmente più diversa, come anche lo stile, ma è pur vero che entrambe affrontano questioni politiche e sociali, mirando a sollevare domande sulle dinamiche di potere e sul ruolo dei cittadini nella società.
 -->
 
 <hr>
@@ -472,10 +499,10 @@ ui <- fluidPage(
   titlePanel("Scatter Graph Explorer"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("column1_select", "Select Column 1:", choices = colnames(data)),
-      selectInput("column2_select", "Select Column 2:", choices = colnames(data)),
-      selectInput("column3_select", "Select Column 3:", choices = colnames(data), selected = NULL),
-      actionButton("plot_button", "Plot")
+      selectInput("column1_select", "Seleziona la prima opera:", choices = colnames(data)),
+      selectInput("column2_select", "Seleziona la seconda opera:", choices = colnames(data)),
+      selectInput("column3_select", "Seleziona la terza opera:", choices = colnames(data), selected = NULL),
+      actionButton("plot_button", "Raffigura")
     ),
     mainPanel(
       plotlyOutput("scatter_plot")
@@ -496,16 +523,16 @@ server <- function(input, output) {
         add_trace(y = ~selected_data[, 1], type = "scatter", mode = "lines", line = list(color = ~names(selected_data)[1])) %>%
         add_trace(y = ~selected_data[, 2], type = "scatter", mode = "lines", line = list(color = ~names(selected_data)[2])) %>%
         add_trace(y = ~selected_data[, 3], type = "scatter", mode = "lines", line = list(color = ~names(selected_data)[3])) %>%
-        layout(title = "Scatter Graph with Lines",
-               xaxis = list(title = "Index"),
-               yaxis = list(title = "Value"),
+        layout(title = "Similitudine della frequenza delle opere",
+               xaxis = list(title = "Indice della parola"),
+               yaxis = list(title = "Frequenza percentuale"),
                hovermode = "closest") %>%
         config(displayModeBar = TRUE)  # Show the zoom and pan buttons
     } else {
       plot_ly() %>%
-        layout(title = "Scatter Graph with Lines",
-               xaxis = list(title = "Index"),
-               yaxis = list(title = "Value"),
+        layout(title = "Similitudine della frequenza delle opere",
+               xaxis = list(title = "Indice della parola"),
+               yaxis = list(title = "Frequenza percentuale"),
                hovermode = "closest") %>%
         config(displayModeBar = TRUE)  # Show the zoom and pan buttons
     }

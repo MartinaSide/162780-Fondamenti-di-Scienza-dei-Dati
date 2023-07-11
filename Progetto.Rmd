@@ -98,13 +98,47 @@ I servizi che offre possono essere raggruppati in tre categorie:
 
 Il database contiene la frequenza di tutte parole contenute nelle opere greche e latine che ci sono giunte e queste vengono salvate in tre tipi di dataset fondamentali:
 
-- "- all perc.csv"
+- "- all freq.csv", contiene come colonne la frequenza di tutti i lemmi in ogni opera letteraria o autore 
 
-- "- similarity matrix.csv"
+```{r, echo=FALSE}
+# Read the CSV file
+data <- as.matrix(read.csv("E:/classicalTextFrequencies/000/gr - all freq.csv"))
 
-- "- all keys.csv"
+# Display the first four rows and five columns
+head(data, n = 4)[, 1:5]
+```
 
-Il resto del database è formato dai dati utilizzati per ottenere questi dataset e nel codice Python è presente un metodo per eliminarlo, una volta ottenuti i risultati desiderati.
+- "- all perc.csv", simile al precedente ma contiene i valori espressi in percentuale per ciascun'opera o autore
+
+```{r, echo=FALSE}
+# Read the CSV file
+data <- as.matrix(read.csv("E:/classicalTextFrequencies/000/gr - all perc.csv"))
+
+# Display the first four rows and five columns
+head(data, n = 4)[, 1:5]
+```
+<!--
+
+La matrice di similitudine mi permette di vedere quanto i testi siano simili tra loro, basandomi sulle parole che utilizzano. Posso individuare quali opere sono più simili e trovare eventuali collegamenti o relazioni tra di loro.
+
+Creando questa matrice, posso analizzare in modo efficiente grandi collezioni di testi, scoprendo temi comuni, identificando modelli o individuando documenti correlati, ottenendo una panoramica completa della letteratura greca antica.
+
+Questa matrice mi offre un'opportunità per esplorare la letteratura greca antica in modo innovativo. Posso identificare opere simili, scoprire autori correlati o individuare parole chiave ricorrenti, senza leggere le opere e forse scoprire qualcosa di non ancora notato precedentemente.
+
+Ho scelto di utilizzare la distanza del coseno come misura di similarità perché è particolarmente adatta per l'analisi di testi e dati linguistici. Questa misura considera la direzione dei vettori di frequenza delle parole, piuttosto che la loro lunghezza, consentendo di valutare la similarità basandosi sulle parole utilizzate, senza essere influenzata dalla lunghezza dei testi.
+-->
+
+- "- similarity matrix.csv", contiene la "differe" tra opere o autori, calcolata come la distanza del coseno tra tutte le colonne di "- all perc.csv"
+
+```{r, echo=FALSE}
+# Read the CSV file
+data <- as.matrix(read.csv("E:/classicalTextFrequencies/000/gr - similarity matrix.csv"))
+
+# Display the first four rows and five columns
+head(data, n = 4)[, 1:5]
+```
+
+Il resto del database è formato dai dati utilizzati per ottenere questi dataset e nel codice Python è presente un metodo per eliminarlo, una volta ottenuti i risultati desiderati. Ci sono inoltre altri dataset utili per altre analisi, ma non utilizzati in quest'occasione per concisione. 
 
 I dati sulle opere latine non vengono utilizzati da questo progetto, ma sono comunque presenti nel database e i dataset sono costruiti in maniera identica a quelli per il greco.
 
@@ -215,6 +249,8 @@ shinyApp(ui = ui, server = server)
 
 Il lemma più frequente nel greco antico è ὁ, l'articolo determinativo, seguito da verbi di essere, preposizioni, congiunzioni e parole indeclinabili. Sebbene siano fondamentali nello studio della lingua, questi lemmi non esprimono concetti specifici ed è molto probabile che siano comunque i primi che vengono studiati in ogni caso e quindi sono stati tutti eliminati dalle analisi che seguiranno.
 
+È interessante inoltre il comportamento logaritmico della frequenza delle parole, questo viene caratterizzato da varie leggi di statistica, ma non è lo scopo di questo progetto analizzarlo. È sufficiente notare come i dati finali non rispettano il modello, in quanto sono spesso nomi propri di provenienza dubbia.
+
 ```{r, echo=FALSE}
 library(shiny)
 library(ggplot2)
@@ -310,6 +346,15 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 ```
 
+Da questo grafico è evidente come le parole più comuni ("gignomai": fare, avvenire; "polus": molto; "fhmi": dire; "poiew": fare) appartengono a quello che si potrebbe considerare linguaggio quotidiano e non sono parte di un lessico specialistico. 
+
+Scegliendo le prime 500 parole di questa lista, uno studente di greco potebbe avere un vocabolario sufficiente per affrontare lo studio della lingua.
+
+<!--
+I risultati dell'analisi delle parole più comuni nel greco antico, escludendo il verbo essere, le congiunzioni, le preposizioni e le parole senza significato, mostrano che le parole "gignomai"(fare, avvenire), "polus"(molto), "fhmi"(dire) e "poiew"(fare) sono tra le più frequentemente utilizzate nelle opere letterarie greche.
+
+Queste parole appaiono praticamente in qualsiasi opera, indipendentemente dal genere o dall'autore, poiché non appartengono a un lessico specialistico o limitato. Essendo parole di uso comune, sono fondamentali per la comunicazione di concetti e azioni di base.
+-->
 ---
 
 ## QUANTO SONO SIMILI GLI ARGOMENTI TRATTATI DAGLI AUTORI GRECI?
@@ -331,7 +376,7 @@ ui <- fluidPage(
   titlePanel("Similitudine tra gli autori"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("plot_type", "Select Plot Type:",
+      selectInput("plot_type", "Seleziona il tipo di grafico:",
                   choices = c("Heatmap", "Grafico a Barre"), selected = "Heatmap"),
       conditionalPanel(
         condition = "input.plot_type == 'Grafico a Barre'",
@@ -355,8 +400,9 @@ server <- function(input, output) {
   # Generate the selected plot
   output$plot <- renderPlotly({
     if (input$plot_type == "Heatmap") {
-      # Plot a heatmap using plotly
-      p <- plot_ly(z = data_authors, x = colnames(data_authors), y = rownames(data_authors), type = "heatmap")
+       # Plot a heatmap using plotly with reversed Blues color scale
+      p <- plot_ly(z = data_authors, x = colnames(data_authors), y = rownames(data_authors), type = "heatmap",
+                   colorscale = "Blues", reversescale = TRUE)  # Use reversed Blues color scale for the heatmap
       p <- p %>% layout(title = "Similitudine tra gli autori")
       p
     } else if (input$plot_type == "Grafico a Barre") {
@@ -470,15 +516,21 @@ shinyApp(ui = ui, server = server)
 
 <b>Euclide</b>:
 
+
 - Similitudine lontana con i trattati filosofici di Plutarco e il trattato di Astronomia di Claudio Tolomeo.
+
 
 <b>Callimaco</b>:
 
+
 - Notevoli somiglianze con delle collezioni di opere spurie
+
 
 <b>Apollonio Rodio</b>:
 
+
 - Notevoli somiglianze con l'Iliade e l'Odissea (circa 80% di similitudine).
+
 
 <b>Le Rane di Aristofane</b>:
 

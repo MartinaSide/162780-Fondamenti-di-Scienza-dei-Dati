@@ -380,9 +380,9 @@ ui <- fluidPage(
                   choices = c("Heatmap", "Grafico a Barre"), selected = "Heatmap"),
       conditionalPanel(
         condition = "input.plot_type == 'Grafico a Barre'",
-        selectInput("row_select", "Select a Row:",
+        selectInput("row_select", "Seleziona un autore:",
                     choices = row.names(data_authors)[-1]),
-        sliderInput("topn_slider", "Number of Top Values to Show:",
+        sliderInput("topn_slider", "Numero di autori simili da visualizzare:",
                     min = 3, max = length(colnames(data_authors)) - 1, value = 10)
       )
     ),
@@ -419,8 +419,8 @@ server <- function(input, output) {
       # Create the bar plot using ggplot2
       p <- ggplot(data, aes(x = Works, y = Similarity)) +
         geom_bar(stat = "identity", fill = ifelse(data$TopThree, "#FF6600", "#779AAB")) +
-        labs(title = paste("Similarity to", input$row_select),
-             x = "Works", y = "Similarity") +
+        labs(title = paste("Similitudine a ", input$row_select),
+             x = "Autore", y = "Similitudine[0,1]") +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
         geom_text(aes(label = round(Similarity, 2)), vjust = -0.5, size = 3)

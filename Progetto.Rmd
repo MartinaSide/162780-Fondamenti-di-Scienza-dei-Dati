@@ -98,7 +98,7 @@ I servizi che offre possono essere raggruppati in tre categorie:
 
 Il database contiene la frequenza di tutte parole contenute nelle opere greche e latine che ci sono giunte e queste vengono salvate in tre tipi di dataset fondamentali:
 
-- "- all freq.csv", contiene come colonne la frequenza di tutti i lemmi in ogni opera letteraria o autore 
+- "- all freq.csv", le colonne contengono la frequenza di tutti i lemmi in ogni opera letteraria o autore 
 
 ```{r, echo=FALSE}
 # Read the CSV file
@@ -128,7 +128,7 @@ Questa matrice mi offre un'opportunità per esplorare la letteratura greca antic
 Ho scelto di utilizzare la distanza del coseno come misura di similarità perché è particolarmente adatta per l'analisi di testi e dati linguistici. Questa misura considera la direzione dei vettori di frequenza delle parole, piuttosto che la loro lunghezza, consentendo di valutare la similarità basandosi sulle parole utilizzate, senza essere influenzata dalla lunghezza dei testi.
 -->
 
-- "- similarity matrix.csv", contiene la "differe" tra opere o autori, calcolata come la distanza del coseno tra tutte le colonne di "- all perc.csv"
+- "- similarity matrix.csv", contiene la "differenza" tra opere o autori, calcolata come la distanza del coseno tra tutte le colonne di "- all perc.csv"
 
 ```{r, echo=FALSE}
 # Read the CSV file
@@ -150,7 +150,7 @@ I dati sulle opere latine non vengono utilizzati da questo progetto, ma sono com
 
 ## QUALI SONO LE PAROLE PIÙ COMUNI IN GRECO?
 
-Una delle difficoltà maggiori nello studio di una lingua è la scelta del lessico fondamentale da imparare. 
+Una delle difficoltà maggiori nello studio di una lingua è la scelta del lessico fondamentale da acquisire 
 
 ```{r, echo=FALSE}
 library(shiny)
@@ -249,7 +249,7 @@ shinyApp(ui = ui, server = server)
 
 Il lemma più frequente nel greco antico è ὁ, l'articolo determinativo, seguito da verbi di essere, preposizioni, congiunzioni e parole indeclinabili. Sebbene siano fondamentali nello studio della lingua, questi lemmi non esprimono concetti specifici ed è molto probabile che siano comunque i primi che vengono studiati in ogni caso e quindi sono stati tutti eliminati dalle analisi che seguiranno.
 
-È interessante inoltre il comportamento logaritmico della frequenza delle parole, questo viene caratterizzato da varie leggi di statistica, ma non è lo scopo di questo progetto analizzarlo. È sufficiente notare come i dati finali non rispettano il modello, in quanto sono spesso nomi propri di provenienza dubbia.
+È interessante inoltre il comportamento logaritmico della frequenza delle parole, questo viene caratterizzato da varie leggi di statistica, ma non è lo scopo di questo progetto analizzarlo. È sufficiente notare come i dati con minor frequenza non rispettano il modello, in quanto sono spesso nomi propri di provenienza dubbia.
 
 ```{r, echo=FALSE}
 library(shiny)
@@ -558,7 +558,7 @@ data <- read.csv("E:/classicalTextFrequencies/000/gr - all perc.csv", header = T
 
 # Define the UI
 ui <- fluidPage(
-  titlePanel("Scatter Graph Explorer"),
+  titlePanel("Comparazione delle frequenze"),
   sidebarLayout(
     sidebarPanel(
       selectInput("column1_select", "Seleziona la prima opera:", choices = colnames(data)),
@@ -604,10 +604,15 @@ server <- function(input, output) {
 # Run the Shiny app
 shinyApp(ui = ui, server = server)
 ```
+
+Quest'ultimo grafico ha come unico obiettivo dare una visualizzazione grafica del risultato precedente. 
+
 # Conclusioni
 
 L'analisi delle frequenze dei lemmi nelle opere letterarie offre preziose informazioni, ma dobbiamo essere consapevoli dei suoi limiti quando si tratta di categorizzare gli autori all'interno di movimenti letterari più ampi. La complessità e la ricchezza dell'arte letteraria vanno oltre le semplici frequenze di parole, e la bellezza della lettura risiede anche nella sua capacità di sorprenderci e ispirarci in modi imprevedibili.
 
-<hr>
-In memoria della professoressa Marina Sergi Franzutti, una cara amica che ha lasciato un'impronta indelebile nel mio cuore, guidandomi alla scoperta di questo campo.
-<hr>
+---
+
+<i>In memoria della professoressa Marina Sergi Franzutti, una cara amica che ha lasciato un'impronta indelebile nel mio cuore, guidandomi alla scoperta di questo campo.</i>
+
+---

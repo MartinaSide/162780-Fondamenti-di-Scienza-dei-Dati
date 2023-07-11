@@ -317,8 +317,10 @@ shinyApp(ui = ui, server = server)
 Analizzando la frequenza dei lemmi che esprimono concetti specifici, è possibile rappresentare quali autori trattano argomenti simili.
 
 ```{r, echo=FALSE}
+# Load required libraries
 library(shiny)
 library(ggplot2)
+library(plotly)
 
 # Read the similarity matrix from the CSV file
 data_authors <- as.matrix(read.csv("E:/classicalTextFrequencies/DONT TOUCH IT/gr - similarity matrix.csv", dec = "."))
@@ -340,7 +342,7 @@ ui <- fluidPage(
       )
     ),
     mainPanel(
-      plotOutput("plot", height = "500px")  # Set a fixed height for the plot
+      plotlyOutput("plot", height = "500px")  # Set a fixed height for the plot
     )
   ),
   width = "800px",  # Set the width of the UI
@@ -351,10 +353,14 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   # Generate the selected plot
-  output$plot <- renderPlot({
+  output$plot <- renderPlotly({
     if (input$plot_type == "Heatmap") {
-      heatmap(data_authors, Rowv = NA, Colv = NA, symm = TRUE)
+      # Plot a heatmap using plotly
+      p <- plot_ly(z = data_authors, x = colnames(data_authors), y = rownames(data_authors), type = "heatmap")
+      p <- p %>% layout(title = "Similitudine tra gli autori")
+      p
     } else if (input$plot_type == "Grafico a Barre") {
+      # Plot a bar plot
       row <- input$row_select
       topn <- input$topn_slider
       sorted_values <- sort(data_authors[row, ], decreasing = TRUE)
@@ -363,13 +369,17 @@ server <- function(input, output) {
       filtered_matrix <- data_authors[, c(row, sorted_columns)]
       data <- data.frame(Works = colnames(filtered_matrix)[-1], Similarity = filtered_matrix[row, -1])
       data$TopThree <- ifelse(data$Works %in% data$Works[1:3], TRUE, FALSE)  # Highlight top three works
-      ggplot(data, aes(x = Works, y = Similarity)) +
+      
+      # Create the bar plot using ggplot2
+      p <- ggplot(data, aes(x = Works, y = Similarity)) +
         geom_bar(stat = "identity", fill = ifelse(data$TopThree, "#FF6600", "#779AAB")) +
         labs(title = paste("Similarity to", input$row_select),
              x = "Works", y = "Similarity") +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
         geom_text(aes(label = round(Similarity, 2)), vjust = -0.5, size = 3)
+      
+      ggplotly(p)  # Convert ggplot to plotly for zoom functionality
     }
   })
 }
